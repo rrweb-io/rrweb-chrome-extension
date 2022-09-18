@@ -1,0 +1,12 @@
+{
+  "folders": [
+    {
+      "name": "rrweb web extension",
+      "path": ".."
+    },
+    {
+      "name": "web-extension (package)",
+      "path": "../packages/web-extension"
+    }
+  ]
+}
