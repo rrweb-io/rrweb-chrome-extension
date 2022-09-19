@@ -6,7 +6,6 @@
       "outputs": ["dist/**", "typings/**"]
     },
     "test": {},
-    "lint": {},
     "check-types": {}
   }
 }

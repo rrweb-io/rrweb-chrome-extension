@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import webExtension, { readJsonFile } from 'vite-plugin-web-extension';
 import zip from 'vite-plugin-zip';
 import * as path from 'path';
+import type { PackageJson } from 'type-fest';
 
 export default defineConfig({
   root: 'src',
@@ -19,7 +20,8 @@ export default defineConfig({
     webExtension({
       // A function to generate manifest file dynamically.
       manifest: () => {
-        const packageJson = readJsonFile('package.json');
+        const packageJson = readJsonFile('package.json') as PackageJson;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return {
           ...readJsonFile('./src/manifest.json'),
           version: packageJson.version,

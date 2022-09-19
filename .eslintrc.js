@@ -28,5 +28,6 @@ module.exports = {
   ],
   rules: {
     'tsdoc/syntax': 'warn',
+    'prettier/prettier': 'error',
   },
 };

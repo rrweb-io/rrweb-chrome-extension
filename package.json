@@ -5,7 +5,9 @@
   "description": "The web extension of rrweb which helps to run rrweb on any website out of box",
   "scripts": {
     "build:all": "yarn turbo run build && cd packages/web-extension && yarn build:chrome && yarn build:firefox",
-    "test": "yarn turbo run test"
+    "test": "yarn turbo run test",
+    "lint": "yarn eslint packages/*/src --ext .ts,.tsx,.js,.jsx",
+    "lint:report": "yarn eslint --output-file eslint_report.json --format json packages/*/src --ext .ts,.tsx,.js,.jsx"
   },
   "author": "",
   "license": "ISC",
