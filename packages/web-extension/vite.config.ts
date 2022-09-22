@@ -3,6 +3,7 @@ import webExtension, { readJsonFile } from 'vite-plugin-web-extension';
 import zip from 'vite-plugin-zip';
 import * as path from 'path';
 import type { PackageJson } from 'type-fest';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   root: 'src',
@@ -17,6 +18,7 @@ export default defineConfig({
   },
   // Add the webExtension plugin
   plugins: [
+    react(),
     webExtension({
       // A function to generate manifest file dynamically.
       manifest: () => {
@@ -34,6 +36,7 @@ export default defineConfig({
         startUrl: ['github.com/rrweb-io/rrweb'],
         watchIgnored: ['*.md', '*.log'],
       },
+      additionalInputs: ['pages/index.html'],
     }),
     process.env.ZIP === 'true' &&
       zip({

@@ -1,6 +1,6 @@
 import Browser from 'webextension-polyfill';
 import type { PackageJson } from 'type-fest';
-import { Settings, SyncData } from '~/types';
+import { Settings, SyncData, SyncDataKey } from '../types';
 
 void (async () => {
   const recorderVersions = await fetchPackageVersions('rrweb');
@@ -10,7 +10,8 @@ void (async () => {
   const defaultPlayerVersion = playerVersions[0];
   // assign default value to settings of this extension
   const result =
-    ((await Browser.storage.sync.get('settings')) as SyncData) || undefined;
+    ((await Browser.storage.sync.get(SyncDataKey.settings)) as SyncData) ||
+    undefined;
   //   chrome.storage.sync.set(buffer);
   const defaultSettings: Settings = {
     recorderURL: `https://cdn.jsdelivr.net/npm/rrweb@${defaultRecorderVersion}/dist/record/rrweb-record.min.js`,
@@ -19,9 +20,9 @@ void (async () => {
     playerVersion: defaultPlayerVersion,
   };
   let settings = defaultSettings;
-  if (result && result['settings']) {
-    setDefaultSettings(result['settings'], defaultSettings);
-    settings = result['settings'];
+  if (result && result.settings) {
+    setDefaultSettings(result.settings, defaultSettings);
+    settings = result.settings;
   }
   await Browser.storage.sync.set({
     settings,
@@ -92,7 +93,7 @@ async function fetchSourceCode(settings: Settings) {
     });
   }
   if (settings.playerURL) {
-    const code = await (await fetch(settings.recorderURL)).text();
+    const code = await (await fetch(settings.playerURL)).text();
     await Browser.storage.local.set({
       player_code: code,
     });

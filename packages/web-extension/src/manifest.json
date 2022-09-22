@@ -22,5 +22,6 @@
     "48": "assets/icon48.png",
     "128": "assets/icon128.png"
   },
-  "permissions": ["activeTab", "tabs", "storage"]
+  "permissions": ["activeTab", "tabs", "storage", "unlimitedStorage"],
+  "content_security_policy": "script-src-elem 'self' http://localhost:3000 'self'; script-src 'self' 'unsafe-eval' localhost object-src 'self'"
 }
