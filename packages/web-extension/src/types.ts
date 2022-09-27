@@ -1,10 +1,12 @@
 import type { eventWithTime } from 'rrweb/typings/types';
-export type SyncData = {
-  settings: Settings;
-};
+
 export enum SyncDataKey {
   settings = 'settings',
 }
+
+export type SyncData = {
+  settings: Settings;
+};
 
 export type Settings = {
   recorderURL: string;
@@ -13,16 +15,28 @@ export type Settings = {
   playerVersion: string;
 };
 
-export type LocalData = {
-  recorder_code: string;
-  player_code: string;
-  sessions: Record<string, Session>;
-};
-
 export enum LocalDataKey {
   recorderCode = 'recorder_code',
   playerCode = 'player_code',
   sessions = 'sessions',
+  recorderStatus = 'recorder_status',
+}
+
+export type LocalData = {
+  recorder_code: string;
+  player_code: string;
+  sessions: Record<string, Session>;
+  recorder_status: {
+    status: RecorderStatus;
+    startTimestamp?: number;
+    duration?: number;
+  };
+};
+
+export enum RecorderStatus {
+  IDLE = 'IDLE',
+  RECORDING = 'RECORDING',
+  PAUSED = 'PAUSED',
 }
 
 export type Session = {
@@ -42,3 +56,14 @@ export enum ServiceName {
   PauseRecord = 'pause-record',
   ResumeRecord = 'resume-record',
 }
+
+export type StartRecordResponse = {
+  message: 'start-record-response';
+  startTimestamp: number;
+};
+
+export type StopRecordResponse = {
+  message: 'stop-record-response';
+  events: eventWithTime[];
+  endTimestamp: number;
+};

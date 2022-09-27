@@ -6,20 +6,15 @@ import {
   LocalDataKey,
   ServiceName,
   Session,
+  StartRecordResponse,
+  StopRecordResponse,
   SyncData,
+  SyncDataKey,
 } from '../types';
 import Channel from '../utils/channel';
 
 const channel = new Channel();
-type StartRecordResponse = {
-  message: 'start-record-response';
-  startTimeStamp: number;
-};
-type StopRecordResponse = {
-  message: 'stop-record-response';
-  events: eventWithTime[];
-  endTimestamp: number;
-};
+
 void (async () => {
   const data = await Browser.storage.local.get('recorder_code');
   const recorderCode = data['recorder_code'] as string | undefined;
@@ -102,7 +97,7 @@ void (async () => {
 
 async function saveEvents(events: eventWithTime[]) {
   const recorderSettings = (await Browser.storage.sync.get(
-    'settings',
+    SyncDataKey.settings,
   )) as SyncData;
   const { recorderVersion, recorderURL } = recorderSettings.settings;
   const newSession: Session = {

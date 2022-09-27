@@ -1,26 +1,40 @@
-import { useState } from 'react';
-import {
-  Box,
-  Button,
-  Center,
-  Flex,
-  IconButton,
-  Spacer,
-  Stack,
-  Text,
-} from '@chakra-ui/react';
-import { FiSettings, FiList } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
+import { Box, Flex, IconButton, Spacer, Stack, Text } from '@chakra-ui/react';
+import { FiSettings, FiList, FiPause } from 'react-icons/fi';
 import Channel from '../utils/channel';
-import { ServiceName } from '../types';
+import {
+  LocalData,
+  LocalDataKey,
+  RecorderStatus,
+  ServiceName,
+  StartRecordResponse,
+} from '../types';
 import Browser from 'webextension-polyfill';
-const RECORD_BUTTON_SIZE = 5;
+import { CircleButton } from '../components/CircleButton';
+import { Timer } from './Timer';
+const RECORD_BUTTON_SIZE = 3;
 
 const channel = new Channel();
 
 export function App() {
+  const [recording, setRecording] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [startTime, setStartTime] = useState(0);
+
+  useEffect(() => {
+    void Browser.storage.local.get(LocalDataKey.recorderStatus).then((data) => {
+      const localData = data as LocalData;
+      if (!localData || !localData.recorder_status) return;
+      const { status, startTimestamp } = localData.recorder_status;
+      if (status === RecorderStatus.RECORDING) {
+        setRecording(true);
+        setStartTime(startTimestamp || 0);
+      }
+    });
+  }, []);
+
   return (
-    <Stack spacing={8} direction="column" w={300} padding="5%">
+    <Flex direction="column" w={300} padding="5%">
       <Flex>
         <Text fontSize="md" fontWeight="bold">
           RRWeb Recorder
@@ -42,39 +56,89 @@ export function App() {
           ></IconButton>
         </Stack>
       </Flex>
-      <Center>
-        <Button
-          w={`${RECORD_BUTTON_SIZE}rem`}
-          h={`${RECORD_BUTTON_SIZE}rem`}
-          padding={`${RECORD_BUTTON_SIZE / 2}rem`}
-          borderRadius={9999}
-          textAlign="center"
-          bgColor="gray.100"
-          boxSizing="content-box"
+      {recording && startTime && (
+        <Timer startTime={startTime} ticking={recording} />
+      )}
+      <Flex justify="center" gap="10" mt="5" mb="5">
+        <CircleButton
+          size={RECORD_BUTTON_SIZE}
+          title={recording ? 'Stop Recording' : 'Start Recording'}
           onClick={() => {
-            setErrorMessage('');
-            void channel.getCurrentTabId().then((tabId) => {
-              if (tabId === -1) return;
-              void channel
-                .requestToTab(tabId, ServiceName.StartRecord, {})
-                .then((res) => {
-                  console.log(res);
-                })
-                .catch((error: Error) => {
-                  setErrorMessage(error.message);
-                });
-            });
+            if (recording) {
+              // stop recording
+              setErrorMessage('');
+              void channel.getCurrentTabId().then((tabId) => {
+                if (tabId === -1) return;
+                void channel
+                  .requestToTab(tabId, ServiceName.StopRecord, {})
+                  .then(async (res) => {
+                    if (res) {
+                      setRecording(false);
+                      await Browser.storage.local.set({
+                        [LocalDataKey.recorderStatus]: {
+                          status: RecorderStatus.IDLE,
+                        },
+                      });
+                    }
+                  })
+                  .catch((error: Error) => {
+                    setErrorMessage(error.message);
+                  });
+              });
+            } else {
+              // start recording
+              void channel.getCurrentTabId().then((tabId) => {
+                if (tabId === -1) return;
+                void channel
+                  .requestToTab(tabId, ServiceName.StartRecord, {})
+                  .then(async (res: StartRecordResponse | undefined) => {
+                    if (res) {
+                      console.log(res);
+                      setRecording(true);
+                      setStartTime(res.startTimestamp);
+                      await Browser.storage.local.set({
+                        [LocalDataKey.recorderStatus]: {
+                          status: RecorderStatus.RECORDING,
+                          startTimestamp: res.startTimestamp,
+                        },
+                      } as LocalData);
+                    }
+                  })
+                  .catch((error: Error) => {
+                    setErrorMessage(error.message);
+                  });
+              });
+            }
           }}
         >
           <Box
-            bgColor="red.500"
             w={`${RECORD_BUTTON_SIZE}rem`}
             h={`${RECORD_BUTTON_SIZE}rem`}
-            borderRadius={9999}
+            borderRadius={recording ? 6 : 9999}
             margin="0"
+            bgColor="red.500"
           />
-        </Button>
-      </Center>
+        </CircleButton>
+        {/* // TODO add pause function */}
+        {/* {recording && (
+          <CircleButton size={RECORD_BUTTON_SIZE}>
+            <Box
+              w={`${RECORD_BUTTON_SIZE}rem`}
+              h={`${RECORD_BUTTON_SIZE}rem`}
+              borderRadius={9999}
+              margin="0"
+              color="gray.600"
+            >
+              <FiPause
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            </Box>
+          </CircleButton>
+        )} */}
+      </Flex>
       {errorMessage !== '' && (
         <Text color="red.500" fontSize="md">
           {errorMessage}
@@ -82,23 +146,6 @@ export function App() {
           Maybe refresh your current tab.
         </Text>
       )}
-      <Button
-        onClick={() => {
-          void channel.getCurrentTabId().then((tabId) => {
-            if (tabId === -1) return;
-            void channel
-              .requestToTab(tabId, ServiceName.StopRecord, {})
-              .then((res) => {
-                console.log(res);
-              })
-              .catch((error: Error) => {
-                setErrorMessage(error.message);
-              });
-          });
-        }}
-      >
-        Stop
-      </Button>
-    </Stack>
+    </Flex>
   );
 }
