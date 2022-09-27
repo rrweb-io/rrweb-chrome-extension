@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, Flex, IconButton, Spacer, Stack, Text } from '@chakra-ui/react';
-import { FiSettings, FiList, FiPause } from 'react-icons/fi';
+import { FiSettings, FiList } from 'react-icons/fi';
 import Channel from '../utils/channel';
 import {
   LocalData,
