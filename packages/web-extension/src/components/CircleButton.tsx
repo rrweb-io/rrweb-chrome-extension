@@ -1,22 +1,24 @@
-import { Button } from '@chakra-ui/react';
+import { Button, ButtonProps } from '@chakra-ui/react';
+
+interface CircleButtonProps extends ButtonProps {
+  diameter: number;
+  onClick?: () => void;
+  children?: React.ReactNode;
+  title?: string;
+}
 
 export function CircleButton({
-  size,
+  diameter,
   onClick,
   children,
   title,
   ...rest
-}: {
-  size: number;
-  onClick?: () => void;
-  children?: React.ReactNode;
-  title?: string;
-}) {
+}: CircleButtonProps) {
   return (
     <Button
-      w={`${size}rem`}
-      h={`${size}rem`}
-      padding={`${size / 2}rem`}
+      w={`${diameter}rem`}
+      h={`${diameter}rem`}
+      padding={`${diameter / 2}rem`}
       borderRadius={9999}
       textAlign="center"
       bgColor="gray.100"

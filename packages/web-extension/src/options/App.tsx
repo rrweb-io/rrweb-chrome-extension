@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import SidebarWithHeader from '../components/SidebarWithHeader';
-import { FiTarget } from 'react-icons/fi';
+import { FiTarget, FiList, FiSettings } from 'react-icons/fi';
 import RRWebVersion from './RRWebVersion';
 import { Box } from '@chakra-ui/react';
 
@@ -8,9 +8,21 @@ export default function App() {
   return (
     <SidebarWithHeader
       title="Settings"
+      headBarItems={[
+        {
+          label: 'Sessions',
+          icon: FiList,
+          href: '#',
+        },
+        {
+          label: 'Settings',
+          icon: FiSettings,
+          href: '/pages/index.html#',
+        },
+      ]}
       sideBarItems={[
         {
-          name: 'rrweb versions',
+          label: 'rrweb versions',
           icon: FiTarget,
           href: `#`,
         },

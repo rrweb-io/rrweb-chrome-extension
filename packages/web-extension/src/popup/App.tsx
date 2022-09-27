@@ -66,7 +66,7 @@ export function App() {
       )}
       <Flex justify="center" gap="10" mt="5" mb="5">
         <CircleButton
-          size={RECORD_BUTTON_SIZE}
+          diameter={RECORD_BUTTON_SIZE}
           title={recording ? 'Stop Recording' : 'Start Recording'}
           onClick={() => {
             if (recording) {
@@ -126,7 +126,7 @@ export function App() {
         </CircleButton>
         {/* // TODO add pause function */}
         {/* {recording && (
-          <CircleButton size={RECORD_BUTTON_SIZE}>
+          <CircleButton diameter={RECORD_BUTTON_SIZE}>
             <Box
               w={`${RECORD_BUTTON_SIZE}rem`}
               h={`${RECORD_BUTTON_SIZE}rem`}

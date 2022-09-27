@@ -15,25 +15,39 @@ import {
   BoxProps,
   FlexProps,
   Heading,
+  Stack,
+  Text,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
 } from '@chakra-ui/react';
-import { FiMenu } from 'react-icons/fi';
+import { FiChevronRight, FiMenu } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 import Browser from 'webextension-polyfill';
 
-interface SideBarItem {
-  name: string;
+export interface SideBarItem {
+  label: string;
   icon: IconType;
   href: string;
+}
+
+export interface HeadBarItem {
+  label: string;
+  subLabel?: string;
+  children?: Array<HeadBarItem>;
+  href?: string;
 }
 
 export default function SidebarWithHeader({
   children,
   title,
+  headBarItems,
   sideBarItems,
 }: {
-  children: ReactNode;
   title?: string;
   sideBarItems: SideBarItem[];
+  headBarItems: SideBarItem[];
+  children: ReactNode;
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
@@ -61,7 +75,15 @@ export default function SidebarWithHeader({
           />
         </DrawerContent>
       </Drawer>
-      <MobileNav onOpen={onOpen} />
+      <MobileNav onOpen={onOpen}>
+        <Flex
+          alignItems={'center'}
+          display={{ base: 'none', md: 'flex' }}
+          ml={10}
+        >
+          <DesktopNav headBarItems={headBarItems} />
+        </Flex>
+      </MobileNav>
       <Box ml={{ base: 0, md: 60 }}>{children}</Box>
     </Box>
   );
@@ -91,12 +113,14 @@ const SidebarContent = ({
       {...rest}
     >
       <Flex h="20" alignItems="center" mx="8" justify="flex-start" gap="3">
-        <Image
-          borderRadius="md"
-          boxSize="2rem"
-          src={Browser.runtime.getURL('assets/icon128.png')}
-          alt="RRWeb Logo"
-        />
+        <Link href="https://github.com/rrweb-io/rrweb" target="_blank">
+          <Image
+            borderRadius="md"
+            boxSize="2rem"
+            src={Browser.runtime.getURL('assets/icon128.png')}
+            alt="RRWeb Logo"
+          />
+        </Link>
         {title && (
           <Heading as="h4" size="md">
             {title}
@@ -105,8 +129,8 @@ const SidebarContent = ({
         <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
       </Flex>
       {sideBarItems.map((link) => (
-        <NavItem key={link.name} icon={link.icon} href={link.href}>
-          {link.name}
+        <NavItem key={link.label} icon={link.icon} href={link.href}>
+          {link.label}
         </NavItem>
       ))}
     </Box>
@@ -161,7 +185,7 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
       bg={useColorModeValue('white', 'gray.900')}
       borderBottomWidth="1px"
       borderBottomColor={useColorModeValue('gray.200', 'gray.700')}
-      justifyContent={{ base: 'space-between', md: 'flex-end' }}
+      justifyContent={{ base: 'space-between', md: 'flex-start' }}
       {...rest}
     >
       <IconButton
@@ -173,8 +197,94 @@ const MobileNav = ({ onOpen, ...rest }: MobileProps) => {
       />
 
       <HStack spacing={{ base: '0', md: '6' }}>
-        <Flex alignItems={'center'}></Flex>
+        {rest.children && rest.children}
       </HStack>
     </Flex>
+  );
+};
+
+const DesktopNav = ({ headBarItems }: { headBarItems: HeadBarItem[] }) => {
+  const linkColor = useColorModeValue('gray.600', 'gray.200');
+  const linkHoverColor = useColorModeValue('gray.800', 'white');
+  const popoverContentBgColor = useColorModeValue('white', 'gray.800');
+
+  return (
+    <Stack direction={'row'} spacing={4}>
+      {headBarItems.map((navItem) => (
+        <Box key={navItem.label}>
+          <Popover trigger={'hover'} placement={'bottom-start'}>
+            <PopoverTrigger>
+              <Link
+                p={2}
+                href={navItem.href ?? '#'}
+                fontSize={'sm'}
+                fontWeight={500}
+                color={linkColor}
+                _hover={{
+                  textDecoration: 'none',
+                  color: linkHoverColor,
+                }}
+              >
+                {navItem.label}
+              </Link>
+            </PopoverTrigger>
+
+            {navItem.children && (
+              <PopoverContent
+                border={0}
+                boxShadow={'xl'}
+                bg={popoverContentBgColor}
+                p={4}
+                rounded={'xl'}
+                minW={'sm'}
+              >
+                <Stack>
+                  {navItem.children.map((child) => (
+                    <DesktopSubNav key={child.label} {...child} />
+                  ))}
+                </Stack>
+              </PopoverContent>
+            )}
+          </Popover>
+        </Box>
+      ))}
+    </Stack>
+  );
+};
+
+const DesktopSubNav = ({ label, href, subLabel }: HeadBarItem) => {
+  return (
+    <Link
+      href={href}
+      role={'group'}
+      display={'block'}
+      p={2}
+      rounded={'md'}
+      _hover={{ bg: useColorModeValue('pink.50', 'gray.900') }}
+    >
+      <Stack direction={'row'} align={'center'}>
+        <Box>
+          <Text
+            transition={'all .3s ease'}
+            _groupHover={{ color: 'pink.400' }}
+            fontWeight={500}
+          >
+            {label}
+          </Text>
+          <Text fontSize={'sm'}>{subLabel}</Text>
+        </Box>
+        <Flex
+          transition={'all .3s ease'}
+          transform={'translateX(-10px)'}
+          opacity={0}
+          _groupHover={{ opacity: '100%', transform: 'translateX(0)' }}
+          justify={'flex-end'}
+          align={'center'}
+          flex={1}
+        >
+          <Icon color={'pink.400'} w={5} h={5} as={FiChevronRight} />
+        </Flex>
+      </Stack>
+    </Link>
   );
 };
