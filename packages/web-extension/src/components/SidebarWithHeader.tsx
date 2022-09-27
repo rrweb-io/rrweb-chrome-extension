@@ -14,6 +14,7 @@ import {
   useDisclosure,
   BoxProps,
   FlexProps,
+  Heading,
 } from '@chakra-ui/react';
 import { FiMenu } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
@@ -27,9 +28,11 @@ interface SideBarItem {
 
 export default function SidebarWithHeader({
   children,
+  title,
   sideBarItems,
 }: {
   children: ReactNode;
+  title?: string;
   sideBarItems: SideBarItem[];
 }) {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -39,6 +42,7 @@ export default function SidebarWithHeader({
         sideBarItems={sideBarItems}
         onClose={() => onClose}
         display={{ base: 'none', md: 'block' }}
+        title={title}
       />
       <Drawer
         autoFocus={false}
@@ -50,7 +54,11 @@ export default function SidebarWithHeader({
         size="full"
       >
         <DrawerContent>
-          <SidebarContent onClose={onClose} sideBarItems={sideBarItems} />
+          <SidebarContent
+            onClose={onClose}
+            sideBarItems={sideBarItems}
+            title={title}
+          />
         </DrawerContent>
       </Drawer>
       <MobileNav onOpen={onOpen} />
@@ -61,10 +69,16 @@ export default function SidebarWithHeader({
 
 interface SidebarProps extends BoxProps {
   onClose: () => void;
+  title?: string;
   sideBarItems: SideBarItem[];
 }
 
-const SidebarContent = ({ onClose, sideBarItems, ...rest }: SidebarProps) => {
+const SidebarContent = ({
+  onClose,
+  sideBarItems,
+  title,
+  ...rest
+}: SidebarProps) => {
   return (
     <Box
       transition="3s ease"
@@ -76,13 +90,18 @@ const SidebarContent = ({ onClose, sideBarItems, ...rest }: SidebarProps) => {
       h="full"
       {...rest}
     >
-      <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
+      <Flex h="20" alignItems="center" mx="8" justify="flex-start" gap="3">
         <Image
           borderRadius="md"
           boxSize="2rem"
           src={Browser.runtime.getURL('assets/icon128.png')}
           alt="RRWeb Logo"
         />
+        {title && (
+          <Heading as="h4" size="md">
+            {title}
+          </Heading>
+        )}
         <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
       </Flex>
       {sideBarItems.map((link) => (

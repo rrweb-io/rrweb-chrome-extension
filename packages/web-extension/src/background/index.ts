@@ -1,6 +1,6 @@
 import Browser from 'webextension-polyfill';
-import type { PackageJson } from 'type-fest';
 import { Settings, SyncData, SyncDataKey } from '../types';
+import { fetchPackageVersions, getPlayerURL, getRecorderURL } from '../utils';
 
 void (async () => {
   const recorderVersions = await fetchPackageVersions('rrweb');
@@ -12,11 +12,10 @@ void (async () => {
   const result =
     ((await Browser.storage.sync.get(SyncDataKey.settings)) as SyncData) ||
     undefined;
-  //   chrome.storage.sync.set(buffer);
   const defaultSettings: Settings = {
-    recorderURL: `https://cdn.jsdelivr.net/npm/rrweb@${defaultRecorderVersion}/dist/record/rrweb-record.min.js`,
+    recorderURL: getRecorderURL(defaultRecorderVersion),
     recorderVersion: defaultRecorderVersion,
-    playerURL: `https://cdn.jsdelivr.net/npm/rrweb-player@${defaultPlayerVersion}/dist/index.js`,
+    playerURL: getPlayerURL(defaultPlayerVersion),
     playerVersion: defaultPlayerVersion,
   };
   let settings = defaultSettings;
@@ -36,20 +35,6 @@ Browser.storage.onChanged.addListener((changes, area) => {
     void fetchSourceCode(newValue);
   }
 });
-
-async function fetchPackageVersions(packageName: string) {
-  type Meta = {
-    name: string;
-    author: string;
-    versions: Record<string, PackageJson>;
-  };
-  const meta = (await (
-    await fetch(`https://registry.npmjs.org/${packageName}`)
-  ).json()) as Meta;
-  const versions = [];
-  for (const version in meta.versions) versions.push(version);
-  return versions.reverse();
-}
 
 /**
  * Update existed settings with new settings.

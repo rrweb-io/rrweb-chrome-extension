@@ -7,9 +7,10 @@ import Player from './Player';
 export default function App() {
   return (
     <SidebarWithHeader
+      title="Sessions"
       sideBarItems={[
         {
-          name: 'Sessions',
+          name: 'List',
           icon: FiList,
           href: `#`,
         },

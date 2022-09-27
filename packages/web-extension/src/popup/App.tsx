@@ -48,11 +48,16 @@ export function App() {
             size="xs"
             icon={<FiList />}
             aria-label={'Session List'}
+            title="Session List"
           ></IconButton>
           <IconButton
+            onClick={() => {
+              void Browser.tabs.create({ url: '/options/index.html' });
+            }}
             size="xs"
             icon={<FiSettings />}
             aria-label={'Settings button'}
+            title="Settings"
           ></IconButton>
         </Stack>
       </Flex>
