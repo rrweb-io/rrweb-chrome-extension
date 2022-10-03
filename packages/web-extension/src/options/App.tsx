@@ -12,12 +12,12 @@ export default function App() {
         {
           label: 'Sessions',
           icon: FiList,
-          href: '#',
+          href: '/pages/index.html#',
         },
         {
           label: 'Settings',
           icon: FiSettings,
-          href: '/pages/index.html#',
+          href: '#',
         },
       ]}
       sideBarItems={[

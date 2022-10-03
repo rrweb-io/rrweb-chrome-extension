@@ -98,7 +98,6 @@ export function App() {
                   .requestToTab(tabId, ServiceName.StartRecord, {})
                   .then(async (res: StartRecordResponse | undefined) => {
                     if (res) {
-                      console.log(res);
                       setRecording(true);
                       setStartTime(res.startTimestamp);
                       await Browser.storage.local.set({
@@ -106,7 +105,7 @@ export function App() {
                           status: RecorderStatus.RECORDING,
                           startTimestamp: res.startTimestamp,
                         },
-                      } as LocalData);
+                      });
                     }
                   })
                   .catch((error: Error) => {

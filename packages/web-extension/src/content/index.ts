@@ -4,6 +4,7 @@ import type { eventWithTime } from 'rrweb/typings/types';
 import {
   LocalData,
   LocalDataKey,
+  RecorderStatus,
   ServiceName,
   Session,
   StartRecordResponse,
@@ -16,56 +17,13 @@ import Channel from '../utils/channel';
 const channel = new Channel();
 
 void (async () => {
-  const data = await Browser.storage.local.get('recorder_code');
-  const recorderCode = data['recorder_code'] as string | undefined;
-  if (!recorderCode || recorderCode.length === 0) return;
-
-  const scriptEl = document.createElement('script');
-  scriptEl.textContent = `
-	${recorderCode}
-  let events = [];
-  let stopFn = null;
-  let recording = false;
-  
-  function record() {
-    if (stopFn) stopFn();
-    events = [];
-    let recorder;
-    try {
-      recorder = rrwebRecord;
-    } catch (e) {
-      recorder = rrweb.record;
-    }
-    stopFn = recorder({
-      emit: (event) => {
-        events.push(event);
-      },
-    });
-  }
-  
-  window.addEventListener('message', (event) => {
-    const data = event.data;
-    if (data.message === 'start-record') {
-      if (!recording) record();
-      window.postMessage({
-        message: 'start-record-response',
-        startTimestamp: Date.now(),
-      });
-    } else if (data.message === 'stop-record') {
-      if (stopFn) stopFn();
-      window.postMessage({
-        message: 'stop-record-response',
-        events,
-        endTimestamp: Date.now(),
-      });
-    }
-  });
-  `;
-  document.documentElement.appendChild(scriptEl);
-
+  let storedEvents: eventWithTime[] = [];
   let startResponseCb: ((response: StartRecordResponse) => void) | undefined =
     undefined;
-  channel.provide(ServiceName.StartRecord, () => {
+  // The callback function to remove the recorder from the page.
+  let clearRecorderCb: (() => void) | undefined = undefined;
+  channel.provide(ServiceName.StartRecord, async () => {
+    clearRecorderCb = await startRecord();
     window.postMessage({ message: 'start-record' });
     return new Promise((resolve) => {
       startResponseCb = (response) => {
@@ -85,15 +43,100 @@ void (async () => {
   });
 
   window.addEventListener('message', (event) => {
-    const data = event.data as StartRecordResponse | StopRecordResponse;
+    const data = event.data as
+      | StartRecordResponse
+      | StopRecordResponse
+      | HeartBreathMessage;
     if (data.message === 'start-record-response' && startResponseCb)
       startResponseCb(data);
     else if (data.message === 'stop-record-response' && stopResponseCb) {
       stopResponseCb(data);
-      void saveEvents(data.events);
+      void saveEvents(storedEvents.concat(data.events));
+      clearRecorderCb?.();
+      clearRecorderCb = undefined;
+      storedEvents = [];
+    } else if (data.message === 'heart-beat') {
+      const events = data.events;
+      void Browser.storage.local.set({
+        [LocalDataKey.bufferedEvents]: storedEvents.concat(events),
+      });
     }
   });
+
+  const localData = (await Browser.storage.local.get()) as LocalData;
+  if (localData?.recorder_status?.status === RecorderStatus.RECORDING) {
+    clearRecorderCb = await startRecord();
+    storedEvents = localData.buffered_events || [];
+  }
 })();
+
+async function startRecord() {
+  const data = await Browser.storage.local.get('recorder_code');
+  const recorderCode = data['recorder_code'] as string | undefined;
+  if (!recorderCode || recorderCode.length === 0) return;
+
+  const scriptEl = document.createElement('script');
+  try {
+    const uniqueVariablePrefix = '__rrweb_extension_unique_prefix_';
+    const events = `${uniqueVariablePrefix}events`;
+    const stopFn = `${uniqueVariablePrefix}stopFn`;
+    const setIntervalId = `${uniqueVariablePrefix}setIntervalId`;
+    const record = `${uniqueVariablePrefix}record`;
+    scriptEl.textContent = `
+    ${recorderCode}
+    var ${events} = [];
+    var ${stopFn} = null;
+    var ${setIntervalId} = null;
+    
+    function ${record}() {
+      ${events} = [];
+      let recorder;
+      try {
+        recorder = rrwebRecord;
+      } catch (e) {
+        recorder = rrweb.record;
+      }
+      ${stopFn} = recorder({
+        emit: (event) => {
+          ${events}.push(event);
+        },
+      });
+    }
+    
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (data.message === 'stop-record') {
+        if (${stopFn}) ${stopFn}();
+        clearInterval(${setIntervalId});
+        window.postMessage({
+          message: 'stop-record-response',
+          events: ${events},
+          endTimestamp: Date.now(),
+        });
+      }
+    });
+  
+    window.postMessage({
+      message: 'start-record-response',
+      startTimestamp: Date.now(),
+    });
+    ${record}();
+  
+    ${setIntervalId} = setInterval(() => {
+      window.postMessage({
+        message: 'heart-beat',
+        events: ${events},
+      });
+    }, 50);
+    `;
+    document.documentElement.appendChild(scriptEl);
+    return () => {
+      document.documentElement.removeChild(scriptEl);
+    };
+  } catch (e) {
+    document.documentElement.removeChild(scriptEl);
+  }
+}
 
 async function saveEvents(events: eventWithTime[]) {
   const recorderSettings = (await Browser.storage.sync.get(
@@ -117,3 +160,8 @@ async function saveEvents(events: eventWithTime[]) {
   data.sessions[newSession.id] = newSession;
   await Browser.storage.local.set(data);
 }
+
+type HeartBreathMessage = {
+  message: 'heart-beat';
+  events: eventWithTime[];
+};

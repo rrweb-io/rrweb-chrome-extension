@@ -5,7 +5,7 @@ export enum SyncDataKey {
 }
 
 export type SyncData = {
-  settings: Settings;
+  [SyncDataKey.settings]: Settings;
 };
 
 export type Settings = {
@@ -20,17 +20,19 @@ export enum LocalDataKey {
   playerCode = 'player_code',
   sessions = 'sessions',
   recorderStatus = 'recorder_status',
+  bufferedEvents = 'buffered_events',
 }
 
 export type LocalData = {
-  recorder_code: string;
-  player_code: string;
-  sessions: Record<string, Session>;
-  recorder_status: {
+  [LocalDataKey.recorderCode]: string;
+  [LocalDataKey.playerCode]: string;
+  [LocalDataKey.sessions]: Record<string, Session>;
+  [LocalDataKey.recorderStatus]: {
     status: RecorderStatus;
     startTimestamp?: number;
     duration?: number;
   };
+  [LocalDataKey.bufferedEvents]: eventWithTime[];
 };
 
 export enum RecorderStatus {
